@@ -103,6 +103,10 @@ function getWebpackFileManager(less, loaderContext, query, isSync) {
 		}
 
 		var moduleRequest = loaderUtils.urlToRequest(filename, query.root);
+		var loaders = moduleRequest.split('!')
+
+		moduleRequest = loaders.pop();
+
 		// Less is giving us trailing slashes, but the context should have no trailing slash
 		var context = currentDirectory.replace(trailingSlash, "");
 
@@ -112,9 +116,11 @@ function getWebpackFileManager(less, loaderContext, query, isSync) {
 				return;
 			}
 
+			var resolvedRequest = loaders.concat(filename).join('!');
+
 			loaderContext.dependency && loaderContext.dependency(filename);
 			// The default (asynchronous)
-			loaderContext.loadModule("-!" + __dirname + "/stringify.loader.js!" + filename, function(err, data) {
+			loaderContext.loadModule("-!" + __dirname + "/stringify.loader.js!" + resolvedRequest, function(err, data) {
 				if(err) {
 					callback(err);
 					return;
@@ -130,11 +136,16 @@ function getWebpackFileManager(less, loaderContext, query, isSync) {
 
 	WebpackFileManager.prototype.loadFileSync = util.deprecate(function(filename, currentDirectory, options, environment) {
 		var moduleRequest = loaderUtils.urlToRequest(filename, query.root);
+		var loaders = moduleRequest.split('!')
+
+		moduleRequest = loaders.pop();
+
 		// Less is giving us trailing slashes, but the context should have no trailing slash
 		var context = currentDirectory.replace(trailingSlash, "");
 		var data;
 
 		filename = loaderContext.resolveSync(context, moduleRequest);
+
 		loaderContext.dependency && loaderContext.dependency(filename);
 		data = fs.readFileSync(filename, "utf8");
 
